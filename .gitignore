@@ -1,0 +1,14 @@
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.vscode/
+.idea/
+.env*
+**/data/
+**/services/baileys/data/
+**/.next/
+**/node_modules/
+**/pnpm-lock.yaml
+**/trace/

@@ -1,80 +1,95 @@
-# GotNext — Starter
+# GotNext.one
 
-This bundle sets up a clean Next.js (App Router, TS, Tailwind) project with:
-- **No global npm installs** (Corepack + pinned pnpm)
-- **Dockerized dev** option (no Node on host)
-- **Baileys-2025-Rest-API** sidecar on :3001
-- **Supabase** ready (schema + RLS via SQL migration file)
+Invite-only pickup basketball manager. GotNext keeps your crew organised with private teams, invite-based onboarding, RSVP caps with waitlists, and rotating trash-talk that keeps the dashboard lively.
 
-## Quickstart
+## Features
+- **Team management** – Owners and admins create teams, promote organisers, and invite hoopers privately.
+- **Session scheduling** – Upcoming runs appear automatically with roster counts, waitlists, and real-time RSVP status.
+- **Player self-service** – Every hooper controls their profile, signs in from the landing page, and sees random hype lines each visit.
+- **Admin tooling** – Dashboard users can rename teams, manage invites, promote/demote or remove players, and watch rotating team taglines.
+- **Supabase auth & data** – All users, profiles, sessions, and RSVP flows live in Supabase with row-level security.
 
-1) Unzip and `cd gotnext`
-2) (Recommended) Dockerized dev:
+## Tech stack
+- [Next.js 15](https://nextjs.org/) (App Router, TypeScript)
+- [React 19](https://react.dev/) with suspense/`useTransition`
+- [Supabase](https://supabase.com/) for auth, database, RPC
+- Vanilla CSS-in-JS via inline styles for rapid MVP iteration
+
+## Prerequisites
+- **Node.js 20** (use `nvm use 20` or install from nodejs.org)
+- **npm** (ships with Node)
+- A **Supabase project** (free tier is fine) with service role & anon keys
+- Optional: [Supabase CLI](https://supabase.com/docs/guides/cli) for managing migrations locally
+
+## Quick start
+1. **Clone the repo**
    ```bash
-   bash install.sh --docker
+   git clone https://github.com/your-org/gotnext.one.git
+   cd gotnext.one
    ```
-   Then open:
-   - Web: http://localhost:3000
-   - Baileys: http://localhost:3001 (scan QR once with a dedicated WhatsApp number)
 
-   If you prefer host dev (no Docker for web):
+2. **Install dependencies & scaffold env files**
    ```bash
-   bash install.sh
-   ./dev.sh
+   ./install.sh
    ```
-   And (optional) run Baileys in Docker:
+   The script:
+   - verifies Node ≥20
+   - runs `npm ci` inside `gotnext/`
+   - creates `gotnext/.env.local` (from `.env.local.example`)
+
+3. **Configure Supabase**
+   - Create a project in Supabase.
+   - In Supabase Studio → SQL editor, run each file in `gotnext/supabase/migrations/` to create tables, functions, and RLS policies. (With the Supabase CLI you can also run `supabase db push`.)
+   - Update `gotnext/.env.local` with:
+     ```env
+     NEXT_PUBLIC_APP_URL=http://localhost:3000
+     NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
+     NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+     SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+     ```
+
+4. **Run the dev server**
    ```bash
-   docker compose up baileys
+   cd gotnext
+   npm run dev
    ```
+   Then open [`http://localhost:3000`](http://localhost:3000).
 
-3) Supabase
-   - Create a Supabase project (free tier is fine)
-   - In Supabase Studio → SQL Editor → paste the contents of `supabase/migrations/0001_init_schema.sql` (or use Supabase CLI migrations)
-   - Add env vars to `web/.env.local` after the install (examples printed by the installer)
+## Available npm scripts
+Inside `gotnext/`:
+- `npm run dev` – start Next.js in development mode
+- `npm run build` – production build
+- `npm run start` – run the compiled build
 
-4) Next steps
-   - Wire Supabase Auth (magic link)
-   - Implement `/api/rsvp` with capacity + waitlist + promo logic
-   - Configure email provider (Postmark/Resend)
-   - Connect WhatsApp DM triggers via Baileys REST
+## Environment variables
+All runtime configuration lives in `gotnext/.env.local`:
 
-## What GotNext should do
+| Variable | Description |
+| --- | --- |
+| `NEXT_PUBLIC_APP_URL` | Base URL for links and redirects. |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase REST endpoint. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key used by the browser client. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key used by server actions (rename team, etc.). Keep this private. |
 
-GotNext is the ad-free alternative to Teamy, built for your core basketball crew but adaptable to any pickup group. The application should:
-
-- **Manage teams and groups**
-  - Signed-in users can create teams and assign roles (owner, admin, player)
-  - Team owners invite players privately; sign-ups stay closed to the public
-  - Users join teams only via an invite; responding to an invite prompts sign-up for newcomers or sign-in for existing accounts and auto-adds them to the team
-- **User accounts**
-  - Every user can edit their own profile details
-  - Profiles always include name, password, email, and phone number with an international code (e.g., +31, +32)
-- **Schedule events**
-  - Create games or sessions with date, time, location, notes, and capacity
-  - Offer optional repeats every week or on a custom cadence
-- **Handle RSVPs smoothly**
-  - Let players mark themselves as Going, Maybe, or Out
-  - Enforce capacity limits and RSVP deadlines
-  - Maintain a waitlist with auto-promotions when slots open
-- **Notify players**
-  - Send updates via email and WhatsApp (through the Baileys REST API)
-  - Notify players when they are confirmed, waitlisted, promoted, or dropped
-- **Respect privacy and usability**
-  - Keep teams invite-only and hidden from search
-  - Remain GDPR-compliant by avoiding unnecessary data storage
-  - Deliver a lightweight, mobile-friendly PWA experience
-
-## Repo layout (after install)
+## Project structure
 ```
-gotnext/
-  .github/workflows/ci.yaml
-  .nvmrc
-  .npmrc
-  docker-compose.yml
-  dev.sh
-  services/baileys/data/         # persists WhatsApp session
-  web/                            # Next.js app (created by installer)
-  supabase/
-    migrations/
-      0001_init_schema.sql
+.
+├── install.sh                   # one-shot setup helper
+├── gotnext/
+│   ├── app/                     # Next.js App Router pages & components
+│   ├── lib/                     # Supabase helpers, tagline pool, etc.
+│   ├── public/                  # Logos, favicons, PWA icons
+│   ├── supabase/migrations/     # SQL schema & policies
+│   └── package.json             # Next.js app manifest
+└── README.md
 ```
+
+## Supabase migrations
+The SQL files under `gotnext/supabase/migrations/` contain the full schema: teams, members, sessions, signups, invites, and helper functions. Apply them in order via Supabase Studio or the CLI. Whenever you edit the database, create a new migration SQL file to keep environments in sync.
+
+## Contributing / next steps
+- Flesh out email + WhatsApp notifications (hooks are ready in Supabase RPC).
+- Add automated tests (Playwright / Vitest) and linting workflows.
+- Harden the RSVP flow for mobile with responsive UI components.
+
+GotNext is built by hoopers, for hoopers—PRs welcome.

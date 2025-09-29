@@ -18,7 +18,7 @@ export default function NavSignOutButton() {
           setError(body.error ?? 'Failed to sign out.')
           return
         }
-        router.replace('/signin')
+        router.replace('/')
         router.refresh()
       } catch (err) {
         console.error(err)

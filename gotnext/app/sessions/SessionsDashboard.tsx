@@ -1,13 +1,20 @@
 'use client'
 
-import { useActionState, useMemo } from 'react'
+import { useActionState, useEffect, useMemo, useState } from 'react'
 import type { TeamSessionsView } from './page'
-import {
-  joinGameSessionAction,
-  leaveGameSessionAction,
-  SessionActionResult,
-} from './actions'
+import { joinGameSessionAction, leaveGameSessionAction, SessionActionResult } from './actions'
 import { createTeamAction, type ActionResult } from '../dashboard/actions'
+import { taglines } from '@/lib/taglines'
+
+function getTaglineIndex(teamId: string, teamName: string) {
+  if (taglines.length === 0) return 0
+  const key = `${teamId}:${teamName}`
+  let hash = 0
+  for (let i = 0; i < key.length; i += 1) {
+    hash = (hash * 31 + key.charCodeAt(i)) >>> 0
+  }
+  return hash % taglines.length
+}
 
 const initialResult: SessionActionResult = {}
 const initialTeamResult: ActionResult = {}
@@ -130,31 +137,67 @@ export default function SessionsDashboard({ teams, userHasTeams }: SessionsDashb
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 48 }}>
       {teams.map((team) => (
-        <section
-          key={team.teamId}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-            padding: 24,
-            border: '1px solid #1f2937',
-            borderRadius: 16,
-            background: '#0b1120',
-          }}
-        >
-          <header style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <h2 style={{ margin: 0 }}>{team.teamName}</h2>
-            <span style={{ color: '#64748b', fontSize: 14 }}>{team.sessions.length} upcoming games</span>
-          </header>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {team.sessions.map((session) => (
-              <SessionCard key={session.id} session={session} />
-            ))}
-          </div>
-        </section>
+        <TeamSection key={team.teamId} team={team} />
       ))}
     </div>
+  )
+}
+
+function TeamSection({ team }: { team: TeamSessionsView }) {
+  const baseIndex = useMemo(() => getTaglineIndex(team.teamId, team.teamName), [team.teamId, team.teamName])
+  const [offset, setOffset] = useState(0)
+
+  useEffect(() => {
+    if (taglines.length <= 1) return
+    const interval = window.setInterval(() => {
+      setOffset((prev) => (prev + 1) % taglines.length)
+    }, 10000)
+    return () => window.clearInterval(interval)
+  }, [])
+
+  const tagline = taglines.length > 0 ? taglines[(baseIndex + offset) % taglines.length] : ''
+  const [teamTagline, setTeamTagline] = useState(tagline)
+
+  useEffect(() => {
+    setTeamTagline(tagline)
+  }, [tagline])
+
+  return (
+    <section
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        padding: 24,
+        border: '1px solid #1f2937',
+        borderRadius: 16,
+        background: '#0b1120',
+      }}
+    >
+      <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <h2 style={{ margin: 0 }}>
+          {team.teamName}
+          {teamTagline && (
+            <span style={{
+              color: '#475569',
+              fontSize: '0.75em',
+              fontStyle: 'italic',
+              marginLeft: 12,
+              letterSpacing: '0.01em',
+            }}>
+              — {teamTagline}
+            </span>
+          )}
+        </h2>
+        <span style={{ color: '#64748b', fontSize: 13 }}>{team.sessions.length} upcoming games</span>
+      </header>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {team.sessions.map((session) => (
+          <SessionCard key={session.id} session={session} />
+        ))}
+      </div>
+    </section>
   )
 }
 

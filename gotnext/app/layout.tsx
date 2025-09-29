@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import './globals.css'
 import { supabaseServer } from '@/lib/supabase/server'
 import NavSignOutButton from './components/NavSignOutButton'
@@ -7,6 +8,17 @@ import NavSignOutButton from './components/NavSignOutButton'
 export const metadata: Metadata = {
   title: 'GotNext — Invite-only pickup manager',
   description: 'Organise private teams, schedule sessions, and keep RSVPs tight without ads.',
+  icons: {
+    icon: [
+      { url: '/gotnext.icon.png' },
+      { url: '/gotnext.icon.png', rel: 'shortcut icon' },
+      { url: '/gotnext.icon.bw.png', media: '(prefers-color-scheme: dark)' },
+    ],
+    apple: [
+      { url: '/gotnext.icon.png' },
+      { url: '/gotnext.icon.bw.png', media: '(prefers-color-scheme: dark)' },
+    ],
+  },
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -41,15 +53,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              padding: '16px 24px',
+              padding: '10px 20px',
               borderBottom: '1px solid #1f2937',
               background: '#020617',
             }}
           >
-            <Link href="/" style={{ fontSize: 20, fontWeight: 700, letterSpacing: '0.02em' }}>
-              GotNext
+            <Link
+              href="/"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
+            >
+              <picture>
+                <source srcSet="/gotnext.logo.black.png" media="(prefers-color-scheme: light)" />
+                <Image
+                  src="/gotnext.logo.white.png"
+                  alt="GotNext"
+                  width={110}
+                  height={28}
+                  priority
+                  style={{ display: 'block', height: 'auto', width: 'auto' }}
+                />
+              </picture>
             </Link>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               {user ? (
                 <>
                   {canAccessDashboard && (

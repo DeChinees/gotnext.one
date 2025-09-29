@@ -47,21 +47,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
-        <div style={{ minHeight: '100vh', background: '#030712', color: '#f8fafc' }}>
-          <nav
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '10px 20px',
-              borderBottom: '1px solid #1f2937',
-              background: '#020617',
-            }}
-          >
-            <Link
-              href="/"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
-            >
+        <nav className="site-nav">
+          <div className="site-nav__inner">
+            <Link href="/" className="site-nav__brand">
               <picture>
                 <source srcSet="/gotnext.logo.black.png" media="(prefers-color-scheme: light)" />
                 <Image
@@ -74,45 +62,39 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 />
               </picture>
             </Link>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div className={`site-nav__links${user ? ' site-nav__links--auth' : ''}`}>
               {user ? (
                 <>
                   {canAccessDashboard && (
-                    <Link href="/dashboard" style={{ color: '#e2e8f0', fontSize: 14 }}>
+                    <Link href="/dashboard" className="site-nav__link site-nav__link--pill">
                       Dashboard
                     </Link>
                   )}
-                  <Link href="/sessions" style={{ color: '#e2e8f0', fontSize: 14 }}>
+                  <Link href="/sessions" className="site-nav__link site-nav__link--pill">
                     Sessions
                   </Link>
-                  <Link href="/profile" style={{ color: '#e2e8f0', fontSize: 14 }}>
+                  <Link href="/profile" className="site-nav__link site-nav__link--pill">
                     Profile
                   </Link>
                   <NavSignOutButton />
                 </>
               ) : (
                 <>
-                  <Link href="/signin" style={{ color: '#38bdf8', fontSize: 14 }}>
+                  <Link
+                    href="/signin"
+                    className="site-nav__link site-nav__link--accent site-nav__link--pill"
+                  >
                     Sign in
                   </Link>
-                  <Link
-                    href="/signup"
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: 20,
-                      border: '1px solid #22c55e',
-                      color: '#22c55e',
-                      fontSize: 14,
-                    }}
-                  >
+                  <Link href="/signup" className="site-nav__cta site-nav__link--pill">
                     Create account
                   </Link>
                 </>
               )}
             </div>
-          </nav>
-          {children}
-        </div>
+          </div>
+        </nav>
+        {children}
       </body>
     </html>
   )

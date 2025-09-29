@@ -143,7 +143,7 @@ export default function TeamsDashboard({ userId, viewerEmail, teams }: TeamsDash
   }
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="dashboard">
       <header style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <h1 style={{ margin: 0 }}>Team dashboard</h1>
@@ -350,20 +350,11 @@ function TeamOverviewSection({ team, currentUserId }: TeamOverviewProps) {
   }
 
   return (
-    <section style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div
-        style={{
-          padding: 24,
-          border: '1px solid #333',
-          borderRadius: 12,
-          background: '#0f172a',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
+    <section className="dashboard-section">
+      <div className="card dashboard-card">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div
+            className="dashboard-card__header"
             style={{
               display: 'flex',
               flexWrap: 'wrap',
@@ -492,17 +483,7 @@ function TeamOverviewSection({ team, currentUserId }: TeamOverviewProps) {
         </div>
       </div>
 
-      <div
-        style={{
-          padding: 24,
-          border: '1px solid #333',
-          borderRadius: 12,
-          background: '#0b1120',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
+      <div className="card dashboard-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0 }}>Players</h3>
           {canManage && <span style={{ color: '#64748b', fontSize: 13 }}>Tip: promote trusted organisers to admin.</span>}

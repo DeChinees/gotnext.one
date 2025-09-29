@@ -28,23 +28,15 @@ export default function NavSignOutButton() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+    <div className="site-nav__signout-wrap">
       <button
         onClick={handleSignOut}
         disabled={isPending}
-        style={{
-          padding: '6px 12px',
-          borderRadius: 16,
-          border: '1px solid #ef4444',
-          background: '#111827',
-          color: '#fca5a5',
-          cursor: isPending ? 'not-allowed' : 'pointer',
-          fontSize: 13,
-        }}
+        className="site-nav__link site-nav__link--pill site-nav__link--danger"
       >
         {isPending ? 'Signing out…' : 'Sign out'}
       </button>
-      {error && <span style={{ color: '#f87171', fontSize: 12 }}>{error}</span>}
+      {error && <span className="site-nav__signout-error">{error}</span>}
     </div>
   )
 }

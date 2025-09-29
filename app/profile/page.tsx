@@ -20,8 +20,8 @@ export default async function ProfilePage() {
     .maybeSingle()
 
   return (
-    <main>
-      <div style={{ maxWidth: 520, width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <main className="page page--narrow">
+      <div className="card profile-card">
         <header>
           <h1>Profile</h1>
           <p style={{ marginTop: 8, color: '#94a3b8' }}>

@@ -210,97 +210,54 @@ function SessionCard({ session }: SessionCardProps) {
 
   function renderStatus() {
     if (isActive) {
-      return (
-        <p style={{ margin: 0, color: '#22c55e', fontWeight: 500 }}>
-          You’re confirmed for this game{session.userActivePosition ? ` (#${session.userActivePosition})` : ''}.
-        </p>
-      )
+      return <p style={{ margin: 0, color: '#22c55e', fontWeight: 500 }}>You’re confirmed for this game{session.userActivePosition ? ` (#${session.userActivePosition})` : ''}.</p>
     }
 
     if (isReserve) {
-      return (
-        <p style={{ margin: 0, color: '#fbbf24', fontWeight: 500 }}>
-          You’re #{session.userReservePosition ?? '?'} on the standby list. We’ll promote you automatically when a spot
-          opens up.
-        </p>
-      )
+      return <p style={{ margin: 0, color: '#fbbf24', fontWeight: 500 }}>You’re #{session.userReservePosition ?? '?'} on the standby list. We’ll promote you automatically when a spot opens up.</p>
     }
 
     if (spotsRemaining > 0) {
-      return (
-        <p style={{ margin: 0, color: '#94a3b8' }}>
-          {spotsRemaining} open {spotsRemaining === 1 ? 'spot' : 'spots'} · active roster at {session.activeCount}/
-          {session.maxPlayers}.
-        </p>
-      )
+      return <p style={{ margin: 0, color: '#94a3b8' }}>{spotsRemaining} open {spotsRemaining === 1 ? 'spot' : 'spots'} · active roster at {session.activeCount}/{session.maxPlayers}.</p>
     }
 
-    return (
-      <p style={{ margin: 0, color: '#94a3b8' }}>
-        Active roster is full. Join the standby list to be promoted automatically when a slot frees up.
-      </p>
-    )
+    return <p style={{ margin: 0, color: '#94a3b8' }}>Active roster is full. Join the standby list to be promoted automatically when a slot frees up.</p>
   }
 
   function renderRoster(label: string, players: { userId: string; fullName: string | null }[], emptyMessage: string) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <strong style={{ fontSize: 13, color: '#cbd5f5' }}>{label}</strong>
-        {players.length === 0 ? (
-          <span style={{ color: '#475569', fontSize: 13 }}>{emptyMessage}</span>
-        ) : (
-          <span style={{ color: '#94a3b8', fontSize: 13 }}>
-            {players
-              .map((player) => player.fullName ?? 'Unnamed player')
-              .slice(0, 6)
-              .join(', ')}
-            {players.length > 6 ? '…' : ''}
-          </span>
-        )}
+        {players.length === 0 ? <span style={{ color: '#475569', fontSize: 13 }}>{emptyMessage}</span> : <span style={{ color: '#94a3b8', fontSize: 13 }}>{players.map((player) => player.fullName ?? 'Unnamed player').slice(0, 6).join(', ')}{players.length > 6 ? '…' : ''}</span>}
       </div>
     )
   }
 
   return (
-    <article
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-        padding: '18px 20px',
-        borderRadius: 12,
-        border: '1px solid #1f2937',
-        background: '#111827',
-      }}
-    >
-      <header style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <article className="sessions__session">
+      <header className="sessions__session-header">
         <h3 style={{ margin: 0 }}>{session.title}</h3>
         <span style={{ color: '#cbd5f5', fontSize: 14 }} suppressHydrationWarning>
           {formatSessionDateLabel(session.startsAt)}
         </span>
-        {session.location && (
-          <span style={{ color: '#94a3b8', fontSize: 13 }}>📍 {session.location}</span>
-        )}
+        {session.location && <span style={{ color: '#94a3b8', fontSize: 13 }}>📍 {session.location}</span>}
         {session.notes && <span style={{ color: '#64748b', fontSize: 13 }}>{session.notes}</span>}
       </header>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <span style={{ color: '#94a3b8', fontSize: 13 }}>
+      <div className="sessions__session-meta">
+        <span>
           Active roster: {session.activeCount}/{session.maxPlayers} · Standby list: {session.reserveCount}
         </span>
         {renderStatus()}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+      <div className="sessions__roster">
         {renderRoster('Active roster preview', session.activePlayers, 'No confirmed players yet.')}
         {renderRoster('Standby list preview', session.reservePlayers, 'No standby players yet.')}
       </div>
 
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <form
-          action={joinAction}
-          style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}
-        >
+      <div className="sessions__actions">
+        <form action={joinAction} style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
           <input type="hidden" name="sessionId" value={session.id} />
           <button
             type="submit"
@@ -320,10 +277,7 @@ function SessionCard({ session }: SessionCardProps) {
         </form>
 
         {session.userStatus !== 'none' && (
-          <form
-            action={leaveAction}
-            style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}
-          >
+          <form action={leaveAction} style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
             <input type="hidden" name="sessionId" value={session.id} />
             <button
               type="submit"
@@ -344,7 +298,7 @@ function SessionCard({ session }: SessionCardProps) {
       </div>
 
       {(joinState.error || joinState.success || leaveState.error || leaveState.success) && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div className="sessions__feedback">
           {joinState.error && <span style={{ color: '#f87171', fontSize: 13 }}>{joinState.error}</span>}
           {joinState.success && <span style={{ color: '#22c55e', fontSize: 13 }}>{joinState.success}</span>}
           {leaveState.error && <span style={{ color: '#f87171', fontSize: 13 }}>{leaveState.error}</span>}

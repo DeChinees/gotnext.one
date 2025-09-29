@@ -315,7 +315,7 @@ export default async function DashboardPage() {
       }
 
       return (
-        <main>
+        <main className="page page--narrow">
           <TeamsDashboard
             userId={user.id}
             viewerEmail={user.email ?? ''}
@@ -327,8 +327,16 @@ export default async function DashboardPage() {
     console.error('DashboardPage failed', error)
     const message = error instanceof Error ? error.message : 'Unexpected error fetching team data.'
     return (
-      <main>
-        <section style={{ padding: 24, border: '1px solid #ef4444', borderRadius: 12, background: '#1c1917', maxWidth: 640, margin: '48px auto' }}>
+      <main className="page page--narrow page--center">
+        <section
+          className="card"
+          style={{
+            border: '1px solid #ef4444',
+            background: '#1c1917',
+            maxWidth: 'min(100%, 420px)',
+            textAlign: 'center',
+          }}
+        >
           <h1 style={{ marginTop: 0 }}>We couldn't load your dashboard</h1>
           <p style={{ marginTop: 12, color: '#f87171' }}>{message}</p>
           <p style={{ marginTop: 12, color: '#94a3b8' }}>Refresh the page or try again in a moment.</p>

@@ -84,11 +84,11 @@ export default function SignUpPage() {
   }
 
   return (
-    <main>
-      <div style={{ width: '100%', maxWidth: 420 }}>
+    <main className="page page--narrow page--center">
+      <div className="auth-card">
         <h1>Create your GotNext account</h1>
-        <p style={{ marginTop: 8, color: '#888' }}>Fill in your details to manage or join teams.</p>
-        <form onSubmit={handleSubmit} style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <p style={{ color: '#94a3b8' }}>Fill in your details to manage or join teams.</p>
+        <form onSubmit={handleSubmit}>
           <input
             type="text"
             required
@@ -96,7 +96,6 @@ export default function SignUpPage() {
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
             placeholder="Full name"
-            style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #333', background: '#000', color: '#fff' }}
           />
           <input
             type="email"
@@ -105,7 +104,6 @@ export default function SignUpPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="you@example.com"
-            style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #333', background: '#000', color: '#fff' }}
           />
           <input
             type="tel"
@@ -114,7 +112,6 @@ export default function SignUpPage() {
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
             placeholder="+31 612345678"
-            style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #333', background: '#000', color: '#fff' }}
           />
           <input
             type="password"
@@ -124,31 +121,16 @@ export default function SignUpPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="Password"
-            style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #333', background: '#000', color: '#fff' }}
           />
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            style={{
-              padding: '10px 12px',
-              borderRadius: 8,
-              border: '1px solid #333',
-              background: isSubmitting ? '#222' : '#22c55e',
-              color: '#fff',
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            }}
-          >
+          <button type="submit" disabled={isSubmitting} style={{ background: isSubmitting ? '#1e293b' : '#22c55e' }}>
             {isSubmitting ? 'Creating account…' : 'Create account'}
           </button>
         </form>
-        {error && <p style={{ marginTop: 16, color: '#f87171' }}>{error}</p>}
-        {info && <p style={{ marginTop: 16, color: '#22c55e' }}>{info}</p>}
-        <p style={{ marginTop: 20, color: '#888' }}>
+        {error && <p style={{ color: '#f87171' }}>{error}</p>}
+        {info && <p style={{ color: '#22c55e' }}>{info}</p>}
+        <p className="auth-card__meta">
           Already have an account?{' '}
-          <Link
-            href={hasNext && rawNext ? `/signin?next=${encodeURIComponent(nextPath)}` : '/signin'}
-            style={{ textDecoration: 'underline' }}
-          >
+          <Link href={hasNext && rawNext ? `/signin?next=${encodeURIComponent(nextPath)}` : '/signin'} style={{ textDecoration: 'underline' }}>
             Sign in here
           </Link>
         </p>
@@ -156,3 +138,4 @@ export default function SignUpPage() {
     </main>
   )
 }
+

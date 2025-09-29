@@ -52,11 +52,13 @@ export default function SignInForm({
     }
   }
 
+  const containerClass = ['auth-card', className].filter(Boolean).join(' ')
+
   return (
-    <div style={{ width: '100%', maxWidth: 360 }} className={className}>
-      <h1 style={{ marginBottom: 8 }}>{heading}</h1>
-      {description && <p style={{ marginTop: 0, color: '#94a3b8' }}>{description}</p>}
-      <form onSubmit={handleSubmit} style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className={containerClass}>
+      <h1>{heading}</h1>
+      {description && <p style={{ color: '#94a3b8' }}>{description}</p>}
+      <form onSubmit={handleSubmit}>
         <input
           type="email"
           required
@@ -64,7 +66,6 @@ export default function SignInForm({
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #333', background: '#000', color: '#fff' }}
         />
         <input
           type="password"
@@ -73,25 +74,17 @@ export default function SignInForm({
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Password"
-          style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #333', background: '#000', color: '#fff' }}
         />
         <button
           type="submit"
           disabled={isSubmitting}
-          style={{
-            padding: '10px 12px',
-            borderRadius: 8,
-            border: '1px solid #333',
-            background: isSubmitting ? '#222' : '#0ea5e9',
-            color: '#fff',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-          }}
+          style={{ background: isSubmitting ? '#1e293b' : '#0ea5e9' }}
         >
           {isSubmitting ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
-      {error && <p style={{ marginTop: 16, color: '#f87171' }}>{error}</p>}
-      <p style={{ marginTop: 20, color: '#94a3b8' }}>
+      {error && <p style={{ color: '#f87171' }}>{error}</p>}
+      <p className="auth-card__meta">
         Need an account?{' '}
         <Link
           href={hasNext && rawNext ? `/signup?next=${encodeURIComponent(nextPath)}` : '/signup'}

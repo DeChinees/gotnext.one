@@ -1,55 +1,42 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import type { Route } from 'next'
+import { FormEvent, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
 export default function SignInPage() {
   const [email, setEmail] = useState('')
-  const [message, setMessage] = useState<string | null>(null)
+  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setSubmitting] = useState(false)
+  const router = useRouter()
   const searchParams = useSearchParams()
 
-  useEffect(() => {
-    const incomingError = searchParams.get('error')
-    if (incomingError) {
-      setError(incomingError === 'missing_code' ? 'Auth code missing from callback URL.' : incomingError)
-    }
-  }, [searchParams])
+  const hasNext = searchParams.has('next')
+  const rawNext = hasNext ? searchParams.get('next') : null
+  const nextPath = rawNext && rawNext.startsWith('/') ? rawNext : '/dashboard'
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
-    setMessage(null)
-
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL
-    if (!baseUrl) {
-      setError('Missing NEXT_PUBLIC_APP_URL (or NEXT_PUBLIC_SITE_URL) environment variable.')
-      return
-    }
 
     try {
       setSubmitting(true)
       const supabase = supabaseBrowser()
-      await supabase.auth.signOut().catch(() => {})
-      const { error: signInError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: `${baseUrl}/auth/callback`,
-        },
-      })
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
       if (signInError) {
         setError(signInError.message)
         return
       }
 
-      setMessage(`Magic link sent to ${email}. Check your inbox and open the link in this browser.`)
+      router.replace(nextPath as Route)
+      router.refresh()
     } catch (err) {
       console.error(err)
-      setError(err instanceof Error ? err.message : 'Unknown error sending magic link.')
+      setError(err instanceof Error ? err.message : 'Unable to sign in. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -59,7 +46,7 @@ export default function SignInPage() {
     <main>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <h1>Sign in</h1>
-        <p style={{ marginTop: 8, color: '#888' }}>Enter your email to receive a magic link.</p>
+        <p style={{ marginTop: 8, color: '#888' }}>Use your email and password to access GotNext.</p>
         <form onSubmit={handleSubmit} style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input
             type="email"
@@ -68,6 +55,15 @@ export default function SignInPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="you@example.com"
+            style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #333', background: '#000', color: '#fff' }}
+          />
+          <input
+            type="password"
+            required
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Password"
             style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #333', background: '#000', color: '#fff' }}
           />
           <button
@@ -82,11 +78,19 @@ export default function SignInPage() {
               cursor: isSubmitting ? 'not-allowed' : 'pointer',
             }}
           >
-            {isSubmitting ? 'Sending…' : 'Send magic link'}
+            {isSubmitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
-        {message && <p style={{ marginTop: 16, color: '#22c55e' }}>{message}</p>}
         {error && <p style={{ marginTop: 16, color: '#f87171' }}>{error}</p>}
+        <p style={{ marginTop: 20, color: '#888' }}>
+          Need an account?{' '}
+          <Link
+            href={hasNext && rawNext ? `/signup?next=${encodeURIComponent(nextPath)}` : '/signup'}
+            style={{ textDecoration: 'underline' }}
+          >
+            Sign up here
+          </Link>
+        </p>
       </div>
     </main>
   )

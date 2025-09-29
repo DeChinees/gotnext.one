@@ -38,6 +38,32 @@ This bundle sets up a clean Next.js (App Router, TS, Tailwind) project with:
    - Configure email provider (Postmark/Resend)
    - Connect WhatsApp DM triggers via Baileys REST
 
+## What GotNext should do
+
+GotNext is the ad-free alternative to Teamy, built for your core basketball crew but adaptable to any pickup group. The application should:
+
+- **Manage teams and groups**
+  - Signed-in users can create teams and assign roles (owner, admin, player)
+  - Team owners invite players privately; sign-ups stay closed to the public
+  - Users join teams only via an invite; responding to an invite prompts sign-up for newcomers or sign-in for existing accounts and auto-adds them to the team
+- **User accounts**
+  - Every user can edit their own profile details
+  - Profiles always include name, password, email, and phone number with an international code (e.g., +31, +32)
+- **Schedule events**
+  - Create games or sessions with date, time, location, notes, and capacity
+  - Offer optional repeats every week or on a custom cadence
+- **Handle RSVPs smoothly**
+  - Let players mark themselves as Going, Maybe, or Out
+  - Enforce capacity limits and RSVP deadlines
+  - Maintain a waitlist with auto-promotions when slots open
+- **Notify players**
+  - Send updates via email and WhatsApp (through the Baileys REST API)
+  - Notify players when they are confirmed, waitlisted, promoted, or dropped
+- **Respect privacy and usability**
+  - Keep teams invite-only and hidden from search
+  - Remain GDPR-compliant by avoiding unnecessary data storage
+  - Deliver a lightweight, mobile-friendly PWA experience
+
 ## Repo layout (after install)
 ```
 gotnext/

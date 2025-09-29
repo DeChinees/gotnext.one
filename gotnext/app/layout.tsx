@@ -15,6 +15,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     data: { user },
   } = await supabase.auth.getUser()
 
+  let canAccessDashboard = false
+
+  if (user) {
+    const { data: adminMemberships, error: adminCheckError } = await supabase
+      .from('team_members')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['owner', 'admin'])
+      .limit(1)
+
+    if (adminCheckError) {
+      console.error(adminCheckError)
+    }
+
+    canAccessDashboard = (adminMemberships?.length ?? 0) > 0
+  }
+
   return (
     <html lang="en">
       <body>
@@ -35,8 +52,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               {user ? (
                 <>
-                  <Link href="/dashboard" style={{ color: '#e2e8f0', fontSize: 14 }}>
-                    Dashboard
+                  {canAccessDashboard && (
+                    <Link href="/dashboard" style={{ color: '#e2e8f0', fontSize: 14 }}>
+                      Dashboard
+                    </Link>
+                  )}
+                  <Link href="/sessions" style={{ color: '#e2e8f0', fontSize: 14 }}>
+                    Sessions
                   </Link>
                   <Link href="/profile" style={{ color: '#e2e8f0', fontSize: 14 }}>
                     Profile

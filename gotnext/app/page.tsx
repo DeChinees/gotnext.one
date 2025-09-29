@@ -23,7 +23,7 @@ export default function Home() {
             Create an account
           </Link>
           <Link
-            href="/dashboard"
+            href="/sessions"
             style={{
               padding: '12px 20px',
               borderRadius: 999,
@@ -32,7 +32,7 @@ export default function Home() {
               fontWeight: 600,
             }}
           >
-            View dashboard
+            View sessions
           </Link>
         </div>
       </section>

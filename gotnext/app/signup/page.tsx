@@ -19,7 +19,7 @@ export default function SignUpPage() {
 
   const hasNext = searchParams.has('next')
   const rawNext = hasNext ? searchParams.get('next') : null
-  const nextPath = rawNext && rawNext.startsWith('/') ? rawNext : '/dashboard'
+  const nextPath = rawNext && rawNext.startsWith('/') ? rawNext : '/sessions'
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

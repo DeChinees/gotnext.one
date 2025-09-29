@@ -17,11 +17,60 @@ import {
   createSessionsAction,
   createTeamAction,
   removeMemberAction,
+  removePlayerFromSessionAction,
   updateMemberRoleAction,
+  addPlayerToSessionAction,
   updateSignupStatusAction,
 } from './actions'
 
 const initialState: ActionResult = {}
+
+const sessionDateFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+})
+
+const sessionTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+})
+
+const timestampFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+})
+
+function formatSessionDateLabel(value: string) {
+  const date = new Date(value)
+  return `${sessionDateFormatter.format(date)} · ${sessionTimeFormatter.format(date)}`
+}
+
+function formatSessionRange(startsAt: string, endsAt: string) {
+  const start = new Date(startsAt)
+  const end = new Date(endsAt)
+  const dateLabel = sessionDateFormatter.format(start)
+  const startLabel = sessionTimeFormatter.format(start)
+  const endLabel = sessionTimeFormatter.format(end)
+  return `${dateLabel} · ${startLabel} – ${endLabel}`
+}
+
+function formatTimestamp(value: string) {
+  return timestampFormatter.format(new Date(value))
+}
+
+type ToastTone = 'success' | 'error'
+
+interface ToastState {
+  id: number
+  message: string
+  tone: ToastTone
+}
 
 const DASHBOARD_TABS = [
   { id: 'create', label: 'Create team' },
@@ -303,14 +352,8 @@ function TeamOverviewSection({ team, currentUserId }: TeamOverviewProps) {
                 }}
               >
                 <strong>{session.title}</strong>
-                <span style={{ color: '#cbd5f5', fontSize: 13 }}>
-                  {new Date(session.startsAt).toLocaleString(undefined, {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                <span style={{ color: '#cbd5f5', fontSize: 13 }} suppressHydrationWarning>
+                  {formatSessionDateLabel(session.startsAt)}
                 </span>
                 {session.location && <span style={{ color: '#94a3b8', fontSize: 13 }}>📍 {session.location}</span>}
               </div>
@@ -725,7 +768,8 @@ function InviteForm({ team, baseInviteUrl, canManage }: InviteFormProps) {
                 </div>
               </div>
               <div style={{ fontSize: 12, color: '#64748b' }}>
-                Expires {new Date(invite.expiresAt).toLocaleString()}
+                Expires{' '}
+                <span suppressHydrationWarning>{formatTimestamp(invite.expiresAt)}</span>
               </div>
             </div>
           ))
@@ -747,23 +791,151 @@ function GameSessionsPanel({ teamId, teamName, sessions, canManage }: GameSessio
   const [repeatMode, setRepeatMode] = useState<'none' | 'weekly'>('none')
   const [sessionFeedback, setSessionFeedback] = useState<Record<string, ActionResult | null>>({})
   const [isMoving, startMoveTransition] = useTransition()
+  const [isAdding, startAddTransition] = useTransition()
+  const [isRemoving, startRemoveTransition] = useTransition()
+  const [toast, setToast] = useState<ToastState | null>(null)
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(timer)
+  }, [toast])
+
+  function showToast(message: string, tone: ToastTone) {
+    setToast({ id: Date.now(), message, tone })
+  }
 
   const now = Date.now()
   const upcomingSessions = sessions.filter((session) => new Date(session.endsAt).getTime() >= now)
 
   function formatRange(startsAt: string, endsAt: string) {
-    const start = new Date(startsAt)
-    const end = new Date(endsAt)
-    const dateLabel = start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-    const startLabel = start.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-    const endLabel = end.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-    return `${dateLabel} · ${startLabel} – ${endLabel}`
+    return formatSessionRange(startsAt, endsAt)
   }
 
-  function handleMove(sessionId: string, userId: string, targetStatus: 'active' | 'reserve') {
+  function handleMove(
+    sessionId: string,
+    userId: string,
+    targetStatus: 'active' | 'reserve',
+    targetDisplayName: string
+  ) {
     startMoveTransition(async () => {
       const result = await updateSignupStatusAction(sessionId, userId, targetStatus)
-      setSessionFeedback((prev) => ({ ...prev, [sessionId]: result }))
+
+      if (result.error) {
+        setSessionFeedback((prev) => ({ ...prev, [sessionId]: result }))
+        showToast(result.error, 'error')
+        return
+      }
+
+      setSessionFeedback((prev) => {
+        const next = { ...prev }
+        delete next[sessionId]
+        return next
+      })
+
+      if (result.success === 'Roster already up to date.') {
+        showToast(result.success, 'success')
+        return
+      }
+
+      const meta = (result.meta ?? {}) as Record<string, unknown>
+      const targetNameFromMeta = typeof meta.targetName === 'string' ? meta.targetName.trim() : ''
+      const fallbackName = targetDisplayName.trim() || 'This player'
+      const targetName = targetNameFromMeta || fallbackName
+      const promotedNameRaw = typeof meta.promotedName === 'string' ? meta.promotedName.trim() : ''
+      const promotedName = promotedNameRaw || undefined
+
+      let message =
+        targetStatus === 'active'
+          ? `${targetName} promoted to the active roster.`
+          : `${targetName} moved to the standby list.`
+
+      if (promotedName) {
+        message += ` Promoted ${promotedName} from the standby list to the active roster.`
+      } else if (result.success && result.success.includes('Promoted the next player')) {
+        message += ' Promoted the next player from the standby list.'
+      }
+
+      showToast(message, 'success')
+    })
+  }
+
+  function handleAdd(
+    sessionId: string,
+    userId: string,
+    targetStatus: 'active' | 'reserve',
+    targetDisplayName: string
+  ) {
+    startAddTransition(async () => {
+      const result = await addPlayerToSessionAction(sessionId, userId, targetStatus)
+
+      if (result.error) {
+        setSessionFeedback((prev) => ({ ...prev, [sessionId]: result }))
+        showToast(result.error, 'error')
+        return
+      }
+
+      setSessionFeedback((prev) => {
+        const next = { ...prev }
+        delete next[sessionId]
+        return next
+      })
+
+      if (result.success === 'Roster already up to date.') {
+        showToast(result.success, 'success')
+        return
+      }
+
+      const meta = (result.meta ?? {}) as Record<string, unknown>
+      const targetNameFromMeta = typeof meta.targetName === 'string' ? meta.targetName.trim() : ''
+      const fallbackName = targetDisplayName.trim() || 'This player'
+      const targetName = targetNameFromMeta || fallbackName
+
+      const message =
+        targetStatus === 'active'
+          ? `Added ${targetName} to the active roster.`
+          : `Added ${targetName} to the standby list.`
+
+      showToast(message, 'success')
+    })
+  }
+
+  function handleRemove(sessionId: string, userId: string, targetDisplayName: string) {
+    startRemoveTransition(async () => {
+      const result = await removePlayerFromSessionAction(sessionId, userId)
+
+      if (result.error) {
+        setSessionFeedback((prev) => ({ ...prev, [sessionId]: result }))
+        showToast(result.error, 'error')
+        return
+      }
+
+      setSessionFeedback((prev) => {
+        const next = { ...prev }
+        delete next[sessionId]
+        return next
+      })
+
+      if (result.success === 'Player was not on this roster.') {
+        showToast(result.success, 'success')
+        return
+      }
+
+      const meta = (result.meta ?? {}) as Record<string, unknown>
+      const targetNameFromMeta = typeof meta.targetName === 'string' ? meta.targetName.trim() : ''
+      const fallbackName = targetDisplayName.trim() || 'This player'
+      const targetName = targetNameFromMeta || fallbackName
+      const promotedNameRaw = typeof meta.promotedName === 'string' ? meta.promotedName.trim() : ''
+      const promotedName = promotedNameRaw || undefined
+
+      let message = `${targetName} removed from this game.`
+      if (promotedName) {
+        message += ` Promoted ${promotedName} from the standby list to the active roster.`
+      } else if (result.success && result.success.includes('Promoted the next player')) {
+        message += ' Promoted the next player from the standby list.'
+      }
+
+      showToast(message, 'success')
     })
   }
 
@@ -774,6 +946,7 @@ function GameSessionsPanel({ teamId, teamName, sessions, canManage }: GameSessio
     emptyMessage: string,
     targetStatus: 'active' | 'reserve'
   ) {
+    const isStandbyTarget = targetStatus === 'reserve'
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <h4 style={{ margin: 0 }}>{label}</h4>
@@ -799,21 +972,120 @@ function GameSessionsPanel({ teamId, teamName, sessions, canManage }: GameSessio
                 <div style={{ fontSize: 13, color: '#94a3b8' }}>{signup.phone ?? 'No phone on file'}</div>
               </div>
               {canManage && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() =>
+                      handleMove(
+                        session.id,
+                        signup.userId,
+                        targetStatus,
+                        signup.fullName ?? 'Unnamed player'
+                      )
+                    }
+                    disabled={isMoving || isRemoving}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      border: '1px solid ' + (isStandbyTarget ? '#f59e0b' : '#22c55e'),
+                      background: isStandbyTarget ? '#1c1917' : '#0f172a',
+                      color: isStandbyTarget ? '#fbbf24' : '#bbf7d0',
+                      cursor: isMoving || isRemoving ? 'not-allowed' : 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {isStandbyTarget ? 'Move to standby' : 'Promote to active'}
+                  </button>
+                  <button
+                    onClick={() => handleRemove(session.id, signup.userId, signup.fullName ?? 'Unnamed player')}
+                    disabled={isRemoving || isMoving}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      border: '1px solid #ef4444',
+                      background: '#1c1917',
+                      color: '#fca5a5',
+                      cursor: isRemoving || isMoving ? 'not-allowed' : 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Mark inactive
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    )
+  }
+
+  function renderInactiveList(session: GameSessionSummary) {
+    if (!canManage) {
+      return null
+    }
+
+    const inactive = session.inactiveMembers
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <h4 style={{ margin: 0 }}>Inactive members</h4>
+        {inactive.length === 0 ? (
+          <p style={{ margin: 0, color: '#64748b' }}>Everyone has responded.</p>
+        ) : (
+          inactive.map((member) => (
+            <div
+              key={member.userId}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid #1f2937',
+                background: '#111827',
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 600 }}>{member.fullName ?? 'Unnamed player'}</div>
+                <div style={{ fontSize: 13, color: '#94a3b8' }}>{member.phone ?? 'No phone on file'}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button
-                  onClick={() => handleMove(session.id, signup.userId, targetStatus)}
-                  disabled={isMoving}
+                  onClick={() =>
+                    handleAdd(session.id, member.userId, 'active', member.fullName ?? 'Unnamed player')
+                  }
+                  disabled={isAdding || isRemoving}
                   style={{
                     padding: '6px 12px',
                     borderRadius: 6,
-                    border: '1px solid ' + (targetStatus === 'reserve' ? '#f59e0b' : '#22c55e'),
-                    background: targetStatus === 'reserve' ? '#1c1917' : '#0f172a',
-                    color: targetStatus === 'reserve' ? '#fbbf24' : '#bbf7d0',
-                    cursor: isMoving ? 'not-allowed' : 'pointer',
+                    border: '1px solid #22c55e',
+                    background: '#0f172a',
+                    color: '#bbf7d0',
+                    cursor: isAdding || isRemoving ? 'not-allowed' : 'pointer',
+                    fontWeight: 600,
                   }}
                 >
-                  {targetStatus === 'reserve' ? 'Move to reserve' : 'Promote to active'}
+                  Add to active
                 </button>
-              )}
+                <button
+                  onClick={() =>
+                    handleAdd(session.id, member.userId, 'reserve', member.fullName ?? 'Unnamed player')
+                  }
+                  disabled={isAdding || isRemoving}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 6,
+                    border: '1px solid #f59e0b',
+                    background: '#1c1917',
+                    color: '#fbbf24',
+                    cursor: isAdding || isRemoving ? 'not-allowed' : 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  Add to standby
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -823,6 +1095,29 @@ function GameSessionsPanel({ teamId, teamName, sessions, canManage }: GameSessio
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {toast && (
+        <div
+          key={toast.id}
+          role={toast.tone === 'error' ? 'alert' : 'status'}
+          style={{
+            position: 'fixed',
+            bottom: 32,
+            right: 32,
+            padding: '12px 16px',
+            borderRadius: 12,
+            border: '1px solid ' + (toast.tone === 'error' ? '#f87171' : '#22c55e'),
+            background: toast.tone === 'error' ? '#7f1d1d' : '#14532d',
+            color: '#f8fafc',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.45)',
+            pointerEvents: 'none',
+            zIndex: 1000,
+            maxWidth: 320,
+          }}
+        >
+          {toast.message}
+        </div>
+      )}
+
       <div>
         <h3 style={{ margin: 0 }}>Game sessions for {teamName}</h3>
         <p style={{ margin: 0, color: '#94a3b8', fontSize: 14 }}>
@@ -967,7 +1262,9 @@ function GameSessionsPanel({ teamId, teamName, sessions, canManage }: GameSessio
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
                     <div>
                       <h4 style={{ margin: 0, fontSize: 18 }}>{session.title}</h4>
-                      <p style={{ margin: 0, color: '#94a3b8', fontSize: 13 }}>{formatRange(session.startsAt, session.endsAt)}</p>
+                      <p style={{ margin: 0, color: '#94a3b8', fontSize: 13 }} suppressHydrationWarning>
+                        {formatRange(session.startsAt, session.endsAt)}
+                      </p>
                     </div>
                     <span style={{ color: '#bfdbfe', fontSize: 13 }}>
                       Active {session.activeSignups.length}/{session.maxPlayers}
@@ -991,11 +1288,12 @@ function GameSessionsPanel({ teamId, teamName, sessions, canManage }: GameSessio
                   )}
                   {renderSignupList(
                     session,
-                    'Reserve list',
+                    'Standby list',
                     session.reserveSignups,
-                    'Reserve list is empty.',
+                    'Standby list is empty.',
                     'active'
                   )}
+                  {renderInactiveList(session)}
                 </div>
 
                 {feedback?.error && <p style={{ margin: 0, color: '#f87171' }}>{feedback.error}</p>}

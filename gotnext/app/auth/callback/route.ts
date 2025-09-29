@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(url)
   }
 
-  url.pathname = '/dashboard'
+  url.pathname = '/sessions'
   url.searchParams.delete('error')
   return NextResponse.redirect(url)
 }

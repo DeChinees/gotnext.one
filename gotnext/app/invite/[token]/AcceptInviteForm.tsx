@@ -40,8 +40,8 @@ export default function AcceptInviteForm({ token }: AcceptInviteFormProps) {
       {feedback?.success && (
         <p style={{ margin: 0, color: '#22c55e' }}>
           {feedback.success}{' '}
-          <Link href="/dashboard" style={{ color: '#38bdf8', textDecoration: 'underline' }}>
-            Open dashboard
+          <Link href="/sessions" style={{ color: '#38bdf8', textDecoration: 'underline' }}>
+            View sessions
           </Link>
         </p>
       )}

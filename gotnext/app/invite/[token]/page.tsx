@@ -2,6 +2,19 @@ import Link from 'next/link'
 import { supabaseServer } from '@/lib/supabase/server'
 import AcceptInviteForm from './AcceptInviteForm'
 
+const inviteTimestampFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+})
+
+function formatInviteExpiration(value: string) {
+  return inviteTimestampFormatter.format(new Date(value))
+}
+
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
   const supabase = await supabaseServer()
@@ -56,7 +69,9 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
             <dt style={{ color: '#64748b' }}>{invite.email ? 'Invite email' : 'Link type'}</dt>
             <dd style={{ margin: 0 }}>{invite.email ?? 'Shareable link'}</dd>
             <dt style={{ color: '#64748b' }}>Expires</dt>
-            <dd style={{ margin: 0 }}>{new Date(invite.expires_at).toLocaleString()}</dd>
+            <dd style={{ margin: 0 }} suppressHydrationWarning>
+              {formatInviteExpiration(invite.expires_at)}
+            </dd>
           </dl>
         </section>
 
@@ -88,8 +103,8 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
             </div>
           </div>
         ) : isExpired || alreadyAccepted ? (
-          <Link href="/dashboard" style={{ color: '#38bdf8', textDecoration: 'underline' }}>
-            Go to dashboard
+          <Link href="/sessions" style={{ color: '#38bdf8', textDecoration: 'underline' }}>
+            View sessions
           </Link>
         ) : (
           <AcceptInviteForm token={token} />

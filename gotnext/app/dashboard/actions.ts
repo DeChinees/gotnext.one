@@ -51,6 +51,47 @@ export async function createTeamAction(_prev: ActionResult, formData: FormData):
   return { success: 'Team created.' }
 }
 
+export async function renameTeamAction(teamId: string, name: string): Promise<ActionResult> {
+  const trimmedName = name.trim()
+  if (!trimmedName) {
+    return { error: 'Team name is required.' }
+  }
+
+  const { supabase, user } = await ensureUser()
+  if (!user) {
+    return { error: 'You must be signed in to manage teams.' }
+  }
+
+  const { data: membership, error: membershipError } = await supabase
+    .from('team_members')
+    .select('role')
+    .eq('team_id', teamId)
+    .eq('user_id', user.id)
+    .maybeSingle<{ role: TeamRole }>()
+
+  if (membershipError) {
+    console.error(membershipError)
+    return { error: membershipError.message }
+  }
+
+  if (!membership || !['owner', 'admin'].includes(membership.role)) {
+    return { error: 'Only team owners or admins can rename teams.' }
+  }
+
+  const { error } = await supabase.from('teams').update({ name: trimmedName }).eq('id', teamId)
+
+  if (error) {
+    console.error(error)
+    if (error.code === '23505') {
+      return { error: `You already have a team named "${trimmedName}".` }
+    }
+    return { error: error.message }
+  }
+
+  revalidatePath('/dashboard')
+  return { success: 'Team name updated.' }
+}
+
 export async function updateMemberRoleAction(teamId: string, userId: string, role: TeamRole): Promise<ActionResult> {
   if (!['owner', 'admin', 'player'].includes(role)) {
     return { error: 'Invalid role selection.' }

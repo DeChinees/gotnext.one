@@ -155,12 +155,7 @@ function TeamSection({ team }: { team: TeamSessionsView }) {
     return () => window.clearInterval(interval)
   }, [])
 
-  const tagline = taglines.length > 0 ? taglines[(baseIndex + offset) % taglines.length] : ''
-  const [teamTagline, setTeamTagline] = useState(tagline)
-
-  useEffect(() => {
-    setTeamTagline(tagline)
-  }, [tagline])
+  const teamTagline = taglines.length > 0 ? taglines[(baseIndex + offset) % taglines.length] : ''
 
   return (
     <section

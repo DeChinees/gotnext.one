@@ -21,6 +21,7 @@ import {
   updateMemberRoleAction,
   addPlayerToSessionAction,
   updateSignupStatusAction,
+  renameTeamAction,
 } from './actions'
 
 const initialState: ActionResult = {}
@@ -304,9 +305,49 @@ interface TeamOverviewProps {
 }
 
 function TeamOverviewSection({ team, currentUserId }: TeamOverviewProps) {
+  const [teamDisplayName, setTeamDisplayName] = useState(team.name)
+  const [teamNameDraft, setTeamNameDraft] = useState(team.name)
+  const [isEditingName, setEditingName] = useState(false)
+  const [renameFeedback, setRenameFeedback] = useState<ActionResult | null>(null)
+  const [isRenaming, startRenameTransition] = useTransition()
+
+  useEffect(() => {
+    setTeamDisplayName(team.name)
+    if (!isEditingName) {
+      setTeamNameDraft(team.name)
+    }
+  }, [team.name, isEditingName])
+
   const canManage = team.viewerRole === 'owner' || team.viewerRole === 'admin'
   const upcomingSessions = team.sessions.filter((session) => new Date(session.endsAt).getTime() >= Date.now())
   const nextSessions = upcomingSessions.slice(0, 3)
+
+  function handleRename(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const draft = (formData.get('teamName') as string | null)?.trim() ?? ''
+
+    if (!draft) {
+      setRenameFeedback({ error: 'Team name is required.' })
+      return
+    }
+
+    if (draft === teamDisplayName) {
+      setEditingName(false)
+      setRenameFeedback(null)
+      return
+    }
+
+    startRenameTransition(async () => {
+      const result = await renameTeamAction(team.id, draft)
+      setRenameFeedback(result)
+      if (!result.error) {
+        setTeamDisplayName(draft)
+        setTeamNameDraft(draft)
+        setEditingName(false)
+      }
+    })
+  }
 
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -321,12 +362,101 @@ function TeamOverviewSection({ team, currentUserId }: TeamOverviewProps) {
           gap: 16,
         }}
       >
-        <header>
-          <h2 style={{ margin: 0 }}>{team.name}</h2>
-          <p style={{ marginTop: 6, color: '#94a3b8' }}>
-            You’re viewing the roster and upcoming runs for this invite-only crew.
-          </p>
-        </header>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 16,
+            }}
+          >
+            <div style={{ flex: '1 1 280px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {isEditingName ? (
+                <form onSubmit={handleRename} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <span style={{ color: '#cbd5f5', fontSize: 13 }}>Team name</span>
+                    <input
+                      name="teamName"
+                      defaultValue={teamNameDraft}
+                      autoFocus
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 8,
+                        border: '1px solid #333',
+                        background: '#000',
+                        color: '#fff',
+                      }}
+                    />
+                  </label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="submit"
+                      disabled={isRenaming}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                        border: '1px solid #22c55e',
+                        background: '#22c55e',
+                        color: '#0b1120',
+                        cursor: isRenaming ? 'not-allowed' : 'pointer',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {isRenaming ? 'Saving…' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingName(false)
+                        setTeamNameDraft(teamDisplayName)
+                        setRenameFeedback(null)
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                        border: '1px solid #475569',
+                        background: '#111827',
+                        color: '#cbd5f5',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <h2 style={{ margin: 0 }}>{teamDisplayName}</h2>
+              )}
+              <p style={{ margin: 0, color: '#94a3b8' }}>
+                You’re viewing the roster and upcoming runs for this invite-only crew.
+              </p>
+            </div>
+            {canManage && !isEditingName && (
+              <button
+                onClick={() => {
+                  setEditingName(true)
+                  setTeamNameDraft(teamDisplayName)
+                  setRenameFeedback(null)
+                }}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid #38bdf8',
+                  background: '#0f172a',
+                  color: '#bae6fd',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+              >
+                Rename team
+              </button>
+            )}
+          </div>
+          {renameFeedback?.error && <span style={{ color: '#f87171', fontSize: 13 }}>{renameFeedback.error}</span>}
+          {renameFeedback?.success && <span style={{ color: '#22c55e', fontSize: 13 }}>{renameFeedback.success}</span>}
+        </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
           <Badge label={`${team.members.length} players`} tone="neutral" />
           <Badge label={`${team.invites.length} pending invites`} tone={team.invites.length ? 'warning' : 'success'} />

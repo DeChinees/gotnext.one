@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-APP_DIR="$ROOT_DIR/gotnext"
+APP_DIR="$ROOT_DIR"
 
 if [[ ! -d "$APP_DIR" ]]; then
   echo "Could not find Next.js app at $APP_DIR" >&2

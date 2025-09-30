@@ -1,13 +1,27 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import './globals.css'
 import { supabaseServer } from '@/lib/supabase/server'
 import NavSignOutButton from './components/NavSignOutButton'
+import ServiceWorkerRegister from './components/ServiceWorkerRegister'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#030712',
+}
 
 export const metadata: Metadata = {
   title: 'GotNext — Invite-only pickup manager',
   description: 'Organise private teams, schedule sessions, and keep RSVPs tight without ads.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'GotNext',
+    statusBarStyle: 'black-translucent',
+  },
   icons: {
     icon: [
       { url: '/gotnext.icon.png' },
@@ -15,8 +29,8 @@ export const metadata: Metadata = {
       { url: '/gotnext.icon.bw.png', media: '(prefers-color-scheme: dark)' },
     ],
     apple: [
-      { url: '/gotnext.icon.png' },
-      { url: '/gotnext.icon.bw.png', media: '(prefers-color-scheme: dark)' },
+      { url: '/apple-touch-icon.png' },
+      { url: '/apple-touch-icon-precomposed.png' },
     ],
   },
 }
@@ -47,6 +61,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
+        <ServiceWorkerRegister />
         <nav className="site-nav">
           <div className="site-nav__inner">
             <Link href="/" className="site-nav__brand">
@@ -58,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   width={110}
                   height={28}
                   priority
-                  style={{ display: 'block', height: 'auto', width: 'auto' }}
+                  className="site-nav__logo"
                 />
               </picture>
             </Link>

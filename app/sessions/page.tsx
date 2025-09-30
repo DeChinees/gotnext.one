@@ -97,7 +97,7 @@ export default async function SessionsPage() {
 
   if (teamIds.length === 0) {
     return (
-      <main>
+      <main className="sessions">
         <SessionsDashboard
           teams={[]}
           userHasTeams={false}
@@ -267,7 +267,7 @@ export default async function SessionsPage() {
   teams.sort((a, b) => a.teamName.localeCompare(b.teamName))
 
   return (
-    <main>
+    <main className="sessions">
       <SessionsDashboard teams={teams} userHasTeams />
     </main>
   )

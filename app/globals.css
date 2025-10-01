@@ -265,13 +265,20 @@ main {
   align-items: start;
   justify-items: center;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Optional: center vertically if you want full viewport height */
+  min-height: 100vh;       /* Optional: full viewport height */
 }
 
 .landing__panel {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: clamp(16px, 6vw, 28px);
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .landing__panel--intro {
@@ -348,6 +355,45 @@ main {
 .landing__cta-card-copy {
   color: #64748b;
   font-size: 14px;
+}
+
+/* Center all landing panels' content */
+.landing__panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Optional: Adjust spacing for the last panel */
+.landing__panel:last-child {
+  margin-bottom: 0;
+}
+
+/* Optional: Responsive max-width for panels */
+.landing__panel--intro,
+.landing__tagline,
+.landing__panel--signin,
+.landing__mobile-apps {
+  max-width: 420px;
+}
+
+/* Center the CTA cards for mobile apps */
+.landing__cta {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* Responsive: Stack CTA cards on small screens */
+@media (max-width: 600px) {
+  .landing__cta {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 @media (min-width: 640px) {

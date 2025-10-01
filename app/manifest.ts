@@ -17,6 +17,14 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
+        media: '(prefers-color-scheme: light)',
+      },
+      {
+        src: '/gotnext.icon.bw.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
+        media: '(prefers-color-scheme: dark)',
       },
       {
         src: '/gotnext.icon.bw.png',

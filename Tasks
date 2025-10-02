@@ -1,0 +1,13 @@
+
+# TODO: If an Admin is removing a player of the players list, we need to prevent that the next standby player is moved to the players list. We can do this by checking if the user performing the action is an Admin and if so, skip the standby to players move. 
+# TODO: The admin should also have the ability to change the max players of a session. If the max players is increased, we need to move the next standby players to the players list. If the max players is decreased, we need to remove players from the players list and move them to the standby list.
+# TODO: Setup full web push pipeline for notifications, including subscription management
+# TODO: Setup notifications for when a user joins or leaves a session via web push notifications.
+# TODO: Setup notifications for when a session is created or updated via web push notifications.
+# TODO: Setup notifications for when a session is cancelled via web push notifications.
+# TODO: Setup notifications for when a session is deleted via web push notifications.
+# TODO: Setup notifications for when a user is moved from players list to standby list via web push notifications.
+# TODO: Do sanity check of code base, so we can be ready for production.
+# TODO: Look how to bring the application in production on vercel and use gotnext.one domain.
+# TODO: Hardening of the application for production
+ 

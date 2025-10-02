@@ -103,6 +103,8 @@ type GameSignupRow = {
   profiles: { full_name: string | null; phone: string | null } | null
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   try {
       const supabase = await supabaseServer()

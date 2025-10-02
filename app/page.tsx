@@ -11,6 +11,10 @@ export default function Home() {
         <p className="landing__intro">{intro}</p>
       </section>
 
+      <section className="landing__panel landing__tagline">
+        <h1 className="landing__tagline-text">{tagline}</h1>
+      </section>
+      
       <section className="landing__panel landing__panel--signin">
         <SignInForm
           heading="Sign in to lock your run"
@@ -19,8 +23,7 @@ export default function Home() {
         />
       </section>
 
-      <section className="landing__tagline">
-        <h1 className="landing__tagline-text">{tagline}</h1>
+      <section className="landing__panel landing__mobile-apps">
         <div className="landing__cta">
           <PlaceholderCard label="iOS app" sublabel="Coming soon · Add us to your home screen" />
           <PlaceholderCard label="Android app" sublabel="Coming soon · Install as a PWA" />

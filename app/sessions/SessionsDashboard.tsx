@@ -7,13 +7,13 @@ import { createTeamAction, type ActionResult } from '../dashboard/actions'
 import { taglines } from '@/lib/taglines'
 
 function getTaglineIndex(teamId: string, teamName: string) {
-  if (taglines.length === 0) return 0
   const key = `${teamId}:${teamName}`
   let hash = 0
   for (let i = 0; i < key.length; i += 1) {
-    hash = (hash * 31 + key.charCodeAt(i)) >>> 0
+    hash = (hash << 5) - hash + key.charCodeAt(i)
+    hash |= 0 // Convert to 32bit integer
   }
-  return hash % taglines.length
+  return Math.abs(hash) % taglines.length
 }
 
 const initialResult: SessionActionResult = {}
@@ -267,7 +267,7 @@ function SessionCard({ session }: SessionCardProps) {
               borderRadius: 8,
               border: '1px solid #22c55e',
               background: isActive ? '#022c22' : '#22c55e',
-              color: isActive ? '#bbf7d0' : '#022c22',
+              color: isActive ? '#bbf7d0' : '#022c55e',
               cursor: isActive ? 'not-allowed' : 'pointer',
               fontWeight: 600,
             }}

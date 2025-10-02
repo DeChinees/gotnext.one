@@ -1,5 +1,7 @@
 import { cookies } from 'next/headers'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
+
+let warnedAboutReadOnlyCookies = false
 
 export async function supabaseServer() {
   const cookieStore = await cookies()
@@ -9,14 +11,20 @@ export async function supabaseServer() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value ?? null
+        getAll() {
+          return cookieStore.getAll().map((cookie) => ({ name: cookie.name, value: cookie.value }))
         },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options })
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options, maxAge: 0 })
+        async setAll(cookies) {
+          try {
+            cookies.forEach((cookie) => {
+              cookieStore.set(cookie)
+            })
+          } catch (error) {
+            if (process.env.NODE_ENV !== 'production' && !warnedAboutReadOnlyCookies) {
+              warnedAboutReadOnlyCookies = true
+              console.warn('[supabaseServer] Unable to persist Supabase auth cookies in this render context. This can happen in React Server Components; the middleware or route handlers must handle writes.', error)
+            }
+          }
         },
       },
     }
